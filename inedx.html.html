@@ -1,0 +1,747 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sai Balaji Borewells - Invoice Calculator</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<style>
+  :root {
+    --primary: #0f766e;
+    --primary-light: #f0fdfa;
+    --primary-border: #ccfbf1;
+    --accent: #e11d48;
+    --text-dark: #0f172a;
+    --text-body: #334155;
+    --text-muted: #64748b;
+    --border: #e2e8f0;
+    --bg-page: #f8fafc;
+    --card: #ffffff;
+  }
+  * {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", Roboto, sans-serif;
+  }
+  body {
+    background-color: var(--bg-page);
+    color: var(--text-body);
+    padding: 28px 20px;
+    line-height: 1.45;
+  }
+  .app-layout {
+    max-width: 1220px;
+    margin: 0 auto;
+    display: grid;
+    grid-template-columns: 400px 1fr;
+    gap: 28px;
+  }
+  @media (max-width: 960px) {
+    .app-layout {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  /* Controls Panel */
+  .control-panel {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 22px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.03);
+    height: fit-content;
+  }
+  .panel-header {
+    font-size: 1.15rem;
+    font-weight: 700;
+    color: var(--primary);
+    margin-bottom: 16px;
+    padding-bottom: 8px;
+    border-bottom: 2px solid var(--primary-border);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .section-tag {
+    font-size: 0.74rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--primary);
+    margin-top: 14px;
+    margin-bottom: 6px;
+  }
+  .field {
+    margin-bottom: 11px;
+  }
+  .field label {
+    display: block;
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: var(--text-dark);
+    margin-bottom: 4px;
+  }
+  .input {
+    width: 100%;
+    padding: 8px 10px;
+    font-size: 0.88rem;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    background: #ffffff;
+    color: var(--text-dark);
+    transition: all 0.15s ease;
+  }
+  .input:focus {
+    outline: none;
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(15, 118, 110, 0.12);
+  }
+  .grid-2 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+  }
+  .grid-3 {
+    display: grid;
+    grid-template-columns: 1.2fr 1fr 1fr;
+    gap: 8px;
+  }
+
+  /* Slabs Scroll Table */
+  .slab-wrap {
+    max-height: 200px;
+    overflow-y: auto;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    margin-bottom: 12px;
+  }
+  .slab-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.8rem;
+  }
+  .slab-table th {
+    background: var(--primary-light);
+    color: var(--primary);
+    padding: 6px 8px;
+    text-align: left;
+    font-weight: 700;
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    position: sticky;
+    top: 0;
+    border-bottom: 1px solid var(--primary-border);
+  }
+  .slab-table td {
+    padding: 4px 8px;
+    border-bottom: 1px solid #f1f5f9;
+  }
+  .slab-table input {
+    width: 70px;
+    padding: 2px 5px;
+    font-size: 0.8rem;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    text-align: right;
+  }
+
+  /* Action Buttons */
+  .btn-row {
+    display: flex;
+    gap: 10px;
+    margin-top: 18px;
+  }
+  .btn {
+    flex: 1;
+    padding: 10px 14px;
+    font-size: 0.86rem;
+    font-weight: 700;
+    border-radius: 6px;
+    cursor: pointer;
+    text-align: center;
+    border: none;
+    transition: all 0.15s ease;
+  }
+  .btn-pdf {
+    background: var(--primary);
+    color: #ffffff;
+  }
+  .btn-pdf:hover {
+    background: #0d655f;
+  }
+  .btn-img {
+    background: #0284c7;
+    color: #ffffff;
+  }
+  .btn-img:hover {
+    background: #0369a1;
+  }
+
+  /* Document Preview */
+  .preview-container {
+    background: transparent;
+  }
+  .invoice-paper {
+    background: #ffffff;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 34px 38px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.04);
+  }
+  .doc-head {
+    display: flex;
+    justify-content: space-between;
+    padding-bottom: 16px;
+    border-bottom: 2px solid var(--primary);
+    margin-bottom: 18px;
+  }
+  .doc-name {
+    font-size: 1.45rem;
+    font-weight: 800;
+    color: var(--primary);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  .doc-phone {
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: var(--accent);
+    margin-top: 3px;
+  }
+  .doc-sub {
+    font-size: 0.82rem;
+    color: var(--text-muted);
+    margin-top: 2px;
+  }
+  .doc-meta {
+    text-align: right;
+  }
+  .doc-meta h3 {
+    font-size: 1.25rem;
+    font-weight: 800;
+    color: var(--text-dark);
+    letter-spacing: 1px;
+    text-transform: uppercase;
+  }
+  .doc-meta p {
+    font-size: 0.84rem;
+    color: var(--text-muted);
+    margin-top: 3px;
+  }
+  .doc-meta p strong {
+    color: var(--text-dark);
+  }
+
+  .meta-banner {
+    background-color: var(--primary-light);
+    border: 1px solid var(--primary-border);
+    border-radius: 6px;
+    padding: 8px 14px;
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 18px;
+    font-size: 0.85rem;
+  }
+  .meta-banner .lbl {
+    font-size: 0.72rem;
+    font-weight: 700;
+    color: var(--primary);
+    text-transform: uppercase;
+    margin-bottom: 2px;
+  }
+  .meta-banner .val {
+    font-weight: 700;
+    color: var(--text-dark);
+  }
+
+  .preview-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 14px;
+    font-size: 0.84rem;
+  }
+  .preview-table th {
+    background: #f8fafc;
+    color: var(--primary);
+    padding: 7px 8px;
+    text-align: left;
+    font-weight: 700;
+    font-size: 0.76rem;
+    text-transform: uppercase;
+    border-top: 1.5px solid var(--primary);
+    border-bottom: 1.5px solid var(--primary);
+  }
+  .preview-table td {
+    padding: 5px 8px;
+    border-bottom: 1px solid #f1f5f9;
+  }
+  .preview-table tr:nth-child(even) td {
+    background: #fafbfb;
+  }
+  .preview-table th.r, .preview-table td.r { text-align: right; }
+  .preview-table th.c, .preview-table td.c { text-align: center; }
+
+  .subtotal-highlight td {
+    background: var(--primary-light) !important;
+    border-top: 1.5px solid var(--primary);
+    border-bottom: 1.5px solid var(--primary);
+    font-weight: 700;
+    color: var(--primary);
+  }
+
+  .summary-wrap {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: 12px;
+  }
+  .sum-card {
+    width: 290px;
+    border: 1.5px solid var(--primary);
+    border-radius: 6px;
+    padding: 10px 14px;
+    background: #ffffff;
+  }
+  .sum-row {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 4px;
+    font-size: 0.88rem;
+    color: var(--text-muted);
+  }
+  .sum-row .val {
+    font-weight: 600;
+    color: var(--text-dark);
+  }
+  .sum-total-row {
+    border-top: 1.5px solid var(--primary);
+    padding-top: 6px;
+    margin-top: 6px;
+    display: flex;
+    justify-content: space-between;
+    font-size: 1.1rem;
+    font-weight: 800;
+    color: var(--primary);
+  }
+
+  .doc-foot {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    margin-top: 32px;
+    padding-top: 14px;
+    border-top: 1px dashed var(--border);
+    font-size: 0.8rem;
+    color: var(--text-muted);
+  }
+  .signature-block {
+    border-top: 1.5px solid var(--primary);
+    width: 190px;
+    padding-top: 4px;
+    text-align: center;
+    color: var(--text-dark);
+    font-weight: 600;
+  }
+
+  @media print {
+    body {
+      background: #ffffff;
+      padding: 0;
+    }
+    .control-panel {
+      display: none !important;
+    }
+    .app-layout {
+      display: block;
+      max-width: 100%;
+    }
+    .invoice-paper {
+      border: none;
+      box-shadow: none;
+      padding: 0;
+    }
+  }
+</style>
+</head>
+<body>
+
+<div class="app-layout">
+  <!-- Controls Panel -->
+  <div class="control-panel">
+    <div class="panel-header">
+      ⚡ Sai Balaji Borewells Calculator
+    </div>
+
+    <div class="section-tag">Agency Information</div>
+    <div class="field">
+      <label>Agency Name</label>
+      <input type="text" id="compName" class="input" value="Sai Balaji Borewells" oninput="calculate()">
+    </div>
+    <div class="field">
+      <label>Cell Numbers</label>
+      <input type="text" id="compPhones" class="input" value="Cell: 9441022895, 9441038383, 9391398383" oninput="calculate()">
+    </div>
+
+    <div class="section-tag">Customer & Depth</div>
+    <div class="field">
+      <label>Customer Name / Location</label>
+      <input type="text" id="custName" class="input" value="Agricultural Borewell" oninput="calculate()">
+    </div>
+    <div class="grid-2">
+      <div class="field">
+        <label>Invoice Date</label>
+        <input type="date" id="invDate" class="input" oninput="calculate()">
+      </div>
+      <div class="field">
+        <label>Total Depth (Feet)</label>
+        <input type="number" id="totalDepth" class="input" value="1500" oninput="calculate()">
+      </div>
+    </div>
+
+    <div class="section-tag">Tiered Rates (₹/ft)</div>
+    <div class="slab-wrap">
+      <table class="slab-table">
+        <thead>
+          <tr>
+            <th>Depth Range</th>
+            <th style="text-align: right;">Rate / Ft (₹)</th>
+          </tr>
+        </thead>
+        <tbody id="slabTbody"></tbody>
+      </table>
+    </div>
+
+    <div class="section-tag">Casing & Additional Charges</div>
+    <div class="grid-3">
+      <div class="field">
+        <label>Casing Type</label>
+        <input type="text" id="casingType" class="input" value="7\" ISI Casing" oninput="calculate()">
+      </div>
+      <div class="field">
+        <label>Feet</label>
+        <input type="number" id="casingFeet" class="input" value="43" oninput="calculate()">
+      </div>
+      <div class="field">
+        <label>Rate (₹/ft)</label>
+        <input type="number" id="casingRate" class="input" value="580" oninput="calculate()">
+      </div>
+    </div>
+
+    <div class="grid-2">
+      <div class="field">
+        <label>Labour Charges (₹)</label>
+        <input type="number" id="labourCharges" class="input" value="2500" oninput="calculate()">
+      </div>
+      <div class="field">
+        <label>Transport Charges (₹)</label>
+        <input type="number" id="transportCharges" class="input" value="2500" oninput="calculate()">
+      </div>
+    </div>
+
+    <div class="grid-2">
+      <div class="field">
+        <label>Welding / Cap / Extra (₹)</label>
+        <input type="number" id="extraCharges" class="input" value="0" oninput="calculate()">
+      </div>
+      <div class="field">
+        <label>Discount (₹)</label>
+        <input type="number" id="discount" class="input" value="0" oninput="calculate()">
+      </div>
+    </div>
+
+    <div class="btn-row">
+      <button class="btn btn-pdf" onclick="window.print()">Save as PDF</button>
+      <button class="btn btn-img" onclick="saveAsImage()">Save as Image</button>
+    </div>
+  </div>
+
+  <!-- Live Invoice Preview -->
+  <div class="preview-container">
+    <div class="invoice-paper" id="invoiceArea">
+      <div class="doc-head">
+        <div>
+          <div class="doc-name" id="outCompName">SAI BALAJI BOREWELLS</div>
+          <div class="doc-phone" id="outCompPhones">Cell: 9441022895, 9441038383, 9391398383</div>
+          <div class="doc-sub">High Pressure Rig • All Casing Pipes • 4½", 6½" Borewells</div>
+        </div>
+        <div class="doc-meta">
+          <h3>INVOICE</h3>
+          <p><strong># SBB-2026-150</strong> &nbsp;|&nbsp; <span id="outDate"></span></p>
+        </div>
+      </div>
+
+      <div class="meta-banner">
+        <div>
+          <div class="lbl">Customer / Farm</div>
+          <div class="val" id="outCustName">Agricultural Borewell</div>
+        </div>
+        <div>
+          <div class="lbl">Casing Specification</div>
+          <div class="val" id="outCasingSummary">43 Ft (7" ISI Casing)</div>
+        </div>
+        <div style="text-align: right;">
+          <div class="lbl">Total Depth</div>
+          <div class="val"><span id="outTotalDepth">1,500</span> Feet</div>
+        </div>
+      </div>
+
+      <!-- Drilling Table -->
+      <table class="preview-table">
+        <thead>
+          <tr>
+            <th class="c" style="width: 8%;">#</th>
+            <th style="width: 36%;">Depth Range (Feet)</th>
+            <th class="c" style="width: 18%;">Interval</th>
+            <th class="r" style="width: 18%;">Rate / Ft (₹)</th>
+            <th class="r" style="width: 20%;">Amount (₹)</th>
+          </tr>
+        </thead>
+        <tbody id="drillingTbody"></tbody>
+      </table>
+
+      <!-- Secondary Table -->
+      <table class="preview-table" style="margin-top: 6px;">
+        <thead>
+          <tr>
+            <th class="c" style="width: 8%;">#</th>
+            <th style="width: 46%;">Material / Service</th>
+            <th class="c" style="width: 16%;">Qty</th>
+            <th class="r" style="width: 14%;">Rate (₹)</th>
+            <th class="r" style="width: 16%;">Amount (₹)</th>
+          </tr>
+        </thead>
+        <tbody id="extraTbody"></tbody>
+      </table>
+
+      <div class="summary-wrap">
+        <div class="sum-card">
+          <div class="sum-row">
+            <span>Drilling Charges:</span>
+            <span class="val" id="outDrillSub">₹ 5,37,000.00</span>
+          </div>
+          <div class="sum-row">
+            <span>Casing Pipe:</span>
+            <span class="val" id="outCasingSub">₹ 24,940.00</span>
+          </div>
+          <div class="sum-row">
+            <span>Labour & Transport:</span>
+            <span class="val" id="outLabourTransport">₹ 5,000.00</span>
+          </div>
+          <div class="sum-row" id="extraRow" style="display: none;">
+            <span>Extra Services:</span>
+            <span class="val" id="outExtra">₹ 0.00</span>
+          </div>
+          <div class="sum-row" id="discountRow" style="display: none; color: var(--accent);">
+            <span>Discount:</span>
+            <span class="val" id="outDiscount">- ₹ 0.00</span>
+          </div>
+          <div class="sum-total-row">
+            <span>Total Bill:</span>
+            <span id="outGrand">₹ 5,66,940.00</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="doc-foot">
+        <div>
+          Progressive depth-wise slab pricing.<br>
+          Thank you for choosing Sai Balaji Borewells!
+        </div>
+        <div class="signature-block">
+          Authorized Signatory
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  const slabs = [
+    { start: 0, end: 100, rate: 60 },
+    { start: 101, end: 200, rate: 80 },
+    { start: 201, end: 300, rate: 110 },
+    { start: 301, end: 400, rate: 150 },
+    { start: 401, end: 500, rate: 200 },
+    { start: 501, end: 600, rate: 250 },
+    { start: 601, end: 700, rate: 300 },
+    { start: 701, end: 800, rate: 350 },
+    { start: 801, end: 900, rate: 400 },
+    { start: 901, end: 1000, rate: 450 },
+    { start: 1001, end: 1100, rate: 500 },
+    { start: 1101, end: 1200, rate: 550 },
+    { start: 1201, end: 1300, rate: 600 },
+    { start: 1301, end: 1400, rate: 650 },
+    { start: 1401, end: 1500, rate: 720 },
+    { start: 1501, end: 1600, rate: 800 },
+    { start: 1601, end: 1700, rate: 900 },
+    { start: 1701, end: 1800, rate: 1000 },
+    { start: 1801, end: 1900, rate: 1100 },
+    { start: 1901, end: 2000, rate: 1200 }
+  ];
+
+  function init() {
+    const tbody = document.getElementById('slabTbody');
+    tbody.innerHTML = '';
+    slabs.forEach((s, idx) => {
+      const row = document.createElement('tr');
+      row.innerHTML = `
+        <td>${s.start} - ${s.end} ft</td>
+        <td style="text-align: right;">₹ <input type="number" id="slab_rate_${idx}" value="${s.rate}" oninput="calculate()"></td>
+      `;
+      tbody.appendChild(row);
+    });
+    document.getElementById('invDate').value = new Date().toISOString().split('T')[0];
+  }
+
+  function fmt(num) {
+    return '₹ ' + Number(num).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  }
+
+  function calculate() {
+    const compName = document.getElementById('compName').value || 'Sai Balaji Borewells';
+    const compPhones = document.getElementById('compPhones').value || '';
+    const custName = document.getElementById('custName').value || 'Agricultural Borewell';
+    const invDate = document.getElementById('invDate').value;
+    const totalDepth = parseFloat(document.getElementById('totalDepth').value) || 0;
+
+    document.getElementById('outCompName').innerText = compName;
+    document.getElementById('outCompPhones').innerText = compPhones;
+    document.getElementById('outCustName').innerText = custName;
+    document.getElementById('outDate').innerText = invDate;
+    document.getElementById('outTotalDepth').innerText = totalDepth.toLocaleString('en-IN');
+
+    let subtotal = 0;
+    let feetProcessed = 0;
+    const tbody = document.getElementById('drillingTbody');
+    tbody.innerHTML = '';
+
+    let sNo = 1;
+    for (let i = 0; i < slabs.length; i++) {
+      const slab = slabs[i];
+      const rateInput = document.getElementById(`slab_rate_${i}`);
+      const rate = rateInput ? (parseFloat(rateInput.value) || 0) : slab.rate;
+      const slabSpan = (slab.end - (slab.start === 0 ? 0 : slab.start - 1));
+
+      if (totalDepth > (slab.start === 0 ? 0 : slab.start - 1)) {
+        const ft = Math.min(slabSpan, totalDepth - (slab.start === 0 ? 0 : slab.start - 1));
+        const amt = ft * rate;
+        subtotal += amt;
+
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td class="c">${sNo++}</td>
+          <td>${slab.start} – ${slab.start + ft - (slab.start === 0 ? 0 : 1)} ft</td>
+          <td class="c">${ft}</td>
+          <td class="r">${rate.toFixed(2)}</td>
+          <td class="r">${amt.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td>
+        `;
+        tbody.appendChild(tr);
+
+        feetProcessed += ft;
+        if (feetProcessed >= totalDepth) break;
+      }
+    }
+
+    const subTr = document.createElement('tr');
+    subTr.className = 'subtotal-highlight';
+    subTr.innerHTML = `
+      <td colspan="2">Drilling Subtotal (0 – ${totalDepth} Ft)</td>
+      <td class="c">${totalDepth} Ft</td>
+      <td></td>
+      <td class="r">${fmt(subtotal)}</td>
+    `;
+    tbody.appendChild(subTr);
+
+    // Casing & Services
+    const casingType = document.getElementById('casingType').value || 'Casing Pipe';
+    const casingFeet = parseFloat(document.getElementById('casingFeet').value) || 0;
+    const casingRate = parseFloat(document.getElementById('casingRate').value) || 0;
+    const casingAmt = casingFeet * casingRate;
+
+    const labour = parseFloat(document.getElementById('labourCharges').value) || 0;
+    const transport = parseFloat(document.getElementById('transportCharges').value) || 0;
+    const extra = parseFloat(document.getElementById('extraCharges').value) || 0;
+    const discount = parseFloat(document.getElementById('discount').value) || 0;
+
+    document.getElementById('outCasingSummary').innerText = `${casingFeet} Ft (${casingType}) @ ₹${casingRate}/Ft`;
+
+    const extraTbody = document.getElementById('extraTbody');
+    extraTbody.innerHTML = `
+      <tr>
+        <td class="c">1</td>
+        <td>${casingType}</td>
+        <td class="c">${casingFeet} Ft</td>
+        <td class="r">${casingRate.toFixed(2)}</td>
+        <td class="r">${casingAmt.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td>
+      </tr>
+      <tr>
+        <td class="c">2</td>
+        <td>Labour Charges</td>
+        <td class="c">—</td>
+        <td class="r">—</td>
+        <td class="r">${labour.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td>
+      </tr>
+      <tr>
+        <td class="c">3</td>
+        <td>Transport Charges</td>
+        <td class="c">—</td>
+        <td class="r">—</td>
+        <td class="r">${transport.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td>
+      </tr>
+    `;
+
+    if (extra > 0) {
+      extraTbody.innerHTML += `
+        <tr>
+          <td class="c">4</td>
+          <td>Welding / Cap / Extra Work</td>
+          <td class="c">—</td>
+          <td class="r">—</td>
+          <td class="r">${extra.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td>
+        </tr>
+      `;
+    }
+
+    const grand = subtotal + casingAmt + labour + transport + extra - discount;
+
+    document.getElementById('outDrillSub').innerText = fmt(subtotal);
+    document.getElementById('outCasingSub').innerText = fmt(casingAmt);
+    document.getElementById('outLabourTransport').innerText = fmt(labour + transport);
+
+    const extraRow = document.getElementById('extraRow');
+    if (extra > 0) {
+      extraRow.style.display = 'flex';
+      document.getElementById('outExtra').innerText = fmt(extra);
+    } else {
+      extraRow.style.display = 'none';
+    }
+
+    const discRow = document.getElementById('discountRow');
+    if (discount > 0) {
+      discRow.style.display = 'flex';
+      document.getElementById('outDiscount').innerText = '- ' + fmt(discount);
+    } else {
+      discRow.style.display = 'none';
+    }
+
+    document.getElementById('outGrand').innerText = fmt(grand);
+  }
+
+  function saveAsImage() {
+    const el = document.getElementById('invoiceArea');
+    html2canvas(el, { scale: 2 }).then(canvas => {
+      const a = document.createElement('a');
+      a.download = 'Sai_Balaji_Borewells_Invoice.png';
+      a.href = canvas.toDataURL('image/png');
+      a.click();
+    });
+  }
+
+  window.onload = function() {
+    init();
+    calculate();
+  };
+</script>
+
+</body>
+</html>
